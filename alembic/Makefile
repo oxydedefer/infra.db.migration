@@ -1,6 +1,5 @@
-include env_make
+# include env_make
 VERSION ?= 01
-
 REPO = alembic_migration
 NAME = alembic
 
@@ -15,11 +14,23 @@ push:
 debug:
 	docker run --rm --name $(NAME) -i -t $(VOLUMES) $(REPO):$(VERSION) /bin/bash
 
+upgrade_head:
+	docker exec $(NAME) alembic upgrade head
+
+upgrade:
+	docker exec $(NAME) alembic upgrade $(REVISION)
+
+downgrade:
+	docker exec $(NAME) alembic downgrade $(REVISION)
+
+revision:
+	docker exec $(NAME) alembic revision -m  "$(MESSAGE)"
+
 run:
 	docker run --rm --name $(NAME) $(VOLUMES) $(ENV) $(REPO):$(VERSION)
 
 start:
-	docker run -d --name $(NAME) $(PORTS) $(VOLUMES) $(ENV) $(REPO):$(VERSION)
+	docker start --name $(NAME)
 
 stop:
 	docker stop $(NAME)
@@ -31,7 +42,6 @@ release: build
 	make push -e VERSION=$(VERSION)
 
 default: build
-and don’t forget to place an env_make file next to your Makefile that is ignored by the VCS:
 
 
 VOLUMES = -v ${PWD}/versions:/usr/src/app/migration/versions
